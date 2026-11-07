@@ -8,7 +8,7 @@ layer:
     text_style:
       src: styles/text/title.yaml
   - type: table
-    resource: table_04
+    resource: resources.table_04
     headernote:
       text: 설비별 점검 결과
       paragraph_style:

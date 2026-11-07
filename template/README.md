@@ -2,7 +2,7 @@
 
 “농Shim 제 1공장”은 공개 예제용 가상 설정이며 문구·수치·로고는 모두 새로 만든 가상 자료다.
 
-assets.yaml은 표지 2개 표와 공통 로고, resources.yaml은 본문 2개 표와 변수 6개를 등록한다. 두 파일의 형식은 동일한 type: resources다. --resources는 보고서 입력만 교체하고 assets는 유지한다. 같은 종류·이름이 겹치면 오류다.
+assets.yaml은 표지 2개 표와 공통 로고, resources.yaml은 본문 2개 표와 변수 6개를 등록한다. 두 파일의 형식은 동일한 type: resources다. --resources는 보고서 입력만 교체하고 assets는 유지한다. assets.이름 / resources.이름으로 네임스페이스를 구분하며 양쪽에 같은 이름을 사용할 수 있다.
 
 각 파일 내부의 상대 데이터 path는 해당 YAML 디렉터리 기준이며 상위 폴더 이탈을 금지한다. 표지 경로도 상대 경로이므로 체크아웃 후 별도의 경로 수정 단계가 필요하지 않다. 섹션과 스타일은 document.yaml 기준이다.
 

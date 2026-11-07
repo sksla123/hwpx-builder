@@ -475,11 +475,37 @@ class WorkbookReader:
 
 
 class Resources:
-    def __init__(self, root: Path, tables: dict, images: dict):
+    def __init__(
+        self,
+        root: Path,
+        tables: dict,
+        images: dict,
+        *,
+        assets_tables: dict | None = None,
+        assets_images: dict | None = None,
+    ):
         self.root, self.tables, self.images = root, tables, images
+        self.namespaces = {
+            "resources": {"tables": tables, "images": images},
+            "assets": {"tables": assets_tables or {}, "images": assets_images or {}},
+        }
         self.inputs = set()
         self.diagnostics = []
         self.cache = {}
+
+    @staticmethod
+    def key(name):
+        namespace, separator, local = name.partition(".")
+        if separator and namespace in ("assets", "resources"):
+            return namespace, local
+        return "resources", name
+
+    def lookup(self, name, category, source):
+        namespace, local = self.key(name)
+        registry = self.namespaces[namespace][category]
+        if local not in registry:
+            source.fail("RESOURCE_NOT_FOUND", f"리소스가 없습니다: {namespace}.{category}.{local}")
+        return registry[local]
 
     def path(self, definition: dict, source: Source) -> Path:
         raw = definition.get("path")
@@ -498,9 +524,7 @@ class Resources:
         return resolved
 
     def workbook(self, name, source):
-        if name not in self.tables:
-            source.fail("RESOURCE_NOT_FOUND", f"표 리소스가 없습니다: {name}")
-        definition, origin = self.tables[name]
+        definition, origin = self.lookup(name, "tables", source)
         path = self.path(definition, origin)
         if path.suffix.lower() != ".xlsx":
             source.fail("UNSUPPORTED_RESOURCE", "완성 표는 XLSX만 지원합니다.")
@@ -531,8 +555,9 @@ class Resources:
             return values
 
     def table(self, name, source):
-        if name in self.cache:
-            return self.cache[name]
+        key = self.key(name)
+        if key in self.cache:
+            return self.cache[key]
         with self.workbook(name, source) as reader:
             if getattr(self, "variable_path", None) == reader.path:
                 source.fail("VARIABLE_TABLE_NOT_INDEPENDENT", "문서 변수와 완성 표는 별도 파일이어야 합니다.")
@@ -548,13 +573,11 @@ class Resources:
                         "warning",
                     )
                 )
-            self.cache[name] = data
+            self.cache[key] = data
             return data
 
     def picture(self, name, style, source):
-        if name not in self.images:
-            source.fail("RESOURCE_NOT_FOUND", f"이미지 리소스가 없습니다: {name}")
-        definition, origin = self.images[name]
+        definition, origin = self.lookup(name, "images", source)
         path = self.path(definition, origin)
         try:
             raw = path.read_bytes()

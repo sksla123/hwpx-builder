@@ -641,26 +641,21 @@ class ProjectLoader:
         self.default_paragraph = self.paragraph_style(defaults.child("paragraph_style"), ParagraphStyle())
         text_style = self.text_style(defaults.child("text_style"), TextStyle())
         page = self.page(defaults.child("page"), Page())
-        registries = {"tables": {}, "images": {}}
-        for definitions in (
-            self.resource_set(root.child("assets")),
-            self.resource_set(root.child("resources"), self.resources_override),
-        ):
-            for category, registry in definitions.items():
-                for name, (definition, origin) in registry.items():
-                    if name in registries[category]:
-                        previous = registries[category][name][1]
-                        origin.fail(
-                            "DUPLICATE_RESOURCE",
-                            f"리소스 이름이 중복되었습니다: {category}.{name} (기존 정의: {previous.path}{previous.pointer})",
-                        )
-                    registries[category][name] = (definition, origin)
-        self.resources = Resources(self.root, registries["tables"], registries["images"])
-        # All paths were confined within their own source's root before conversion
-        # to absolute paths. Protect inputs from both sets, including unused assets.
-        for registry in registries.values():
-            for definition, origin in registry.values():
-                self.resources.path(definition, origin)
+        assets = self.resource_set(root.child("assets"))
+        resources = self.resource_set(root.child("resources"), self.resources_override)
+        self.resources = Resources(
+            self.root,
+            resources["tables"],
+            resources["images"],
+            assets_tables=assets["tables"],
+            assets_images=assets["images"],
+        )
+        # Each set was confined to its own file root before normalization. Keep
+        # registries isolated while protecting all inputs, including unused assets.
+        for definitions in (assets, resources):
+            for registry in definitions.values():
+                for definition, origin in registry.values():
+                    self.resources.path(definition, origin)
         self.variables = {}
         variables = root.child("variables")
         if variables.value is not None:

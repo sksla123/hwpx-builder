@@ -6,18 +6,18 @@ layer:
   - type: container
     contents:
     - type: image
-      resource: demo_logo
+      resource: assets.demo_logo
       image_style:
         width: 20
         align: center
   - type: table
-    resource: table_01
+    resource: assets.table_01
   - type: paragraph
     text: '작성연월: <ref:written_year_month>'
   - type: paragraph
     text: '운영기간: <ref:reporting_period>'
   - type: table
-    resource: table_02
+    resource: assets.table_02
   - type: paragraph
     text: '작성자: <ref:author> / <ref:department>'
   - type: pagebreak

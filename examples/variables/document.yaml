@@ -3,7 +3,7 @@ type: document
 resources:
   file_path: resources.yaml
 variables:
-  resource: document_variables
+  resource: resources.document_variables
 sections:
 - layer:
     type: single_column

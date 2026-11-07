@@ -12,7 +12,7 @@ defaults:
 resources:
   file_path: resources.yaml
 variables:
-  resource: document_variables
+  resource: resources.document_variables
 sections:
 - src: sections/00-cover.yaml
 - src: sections/01-production.yaml

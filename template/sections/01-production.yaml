@@ -10,7 +10,7 @@ layer:
   - type: paragraph
     text: <ref:summary>
   - type: table
-    resource: table_03
+    resource: resources.table_03
     headernote:
       text: 제품별 생산 및 출하
       paragraph_style:

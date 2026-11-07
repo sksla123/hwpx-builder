@@ -23,9 +23,9 @@ def setup_assets(tmp_path):
     (root / "document.yaml").write_text(yaml.safe_dump(document, allow_unicode=True), encoding="utf-8")
     section = root / "sections/body.yaml"
     data = yaml.safe_load(section.read_text(encoding="utf-8"))
-    data["layer"]["contents"].insert(0, {"type": "table", "resource": "cover"})
+    data["layer"]["contents"].insert(0, {"type": "table", "resource": "assets.cover"})
     data["layer"]["contents"].append(
-        {"type": "container", "contents": [{"type": "image", "resource": "brand"}]}
+        {"type": "container", "contents": [{"type": "image", "resource": "assets.brand"}]}
     )
     section.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
     report = materials(tmp_path / "run", "보고서 입력")
@@ -48,20 +48,27 @@ def test_override_retains_assets_and_each_file_resolves_its_own_data(tmp_path, m
     assert json.loads(capsys.readouterr().out)["valid"]
 
 
-@pytest.mark.parametrize("category,name", [("tables", "cover"), ("images", "brand")])
-def test_duplicate_names_fail_at_replacing_file_without_silent_override(tmp_path, category, name):
+def test_same_names_in_both_namespaces_resolve_independently(tmp_path):
     root, static, report = setup_assets(tmp_path)
+    from PIL import Image
+
+    Image.new("RGB", (2, 2), "red").save(report.parent / "assets/logo.png")
     data = yaml.safe_load(report.read_text(encoding="utf-8"))
-    entry = next(iter(data[category].values()))
-    data[category][name] = dict(entry)
+    data["tables"]["cover"] = dict(data["tables"]["table"])
+    data["images"]["brand"] = dict(data["images"]["logo"])
     report.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
-    with pytest.raises(BuildError, match="DUPLICATE_RESOURCE") as caught:
-        load_project(root, resources=report)
-    error = caught.value.diagnostic
-    assert error.source_path == str(report)
-    assert error.pointer == f"/{category}/{name}"
-    assert error.line and error.column
-    assert str(static) in error.message
+    path = root / "sections/body.yaml"
+    section = yaml.safe_load(path.read_text(encoding="utf-8"))
+    section["layer"]["contents"].append(
+        {"type": "container", "contents": [{"type": "image", "resource": "resources.brand"}]}
+    )
+    section["layer"]["contents"].append({"type": "table", "resource": "resources.cover"})
+    path.write_text(yaml.safe_dump(section, allow_unicode=True), encoding="utf-8")
+    blocks = load_project(root, resources=report).sections[0].contents
+    assert blocks[0].data.cells[0].paragraph.runs[0].text == "공통 표지"
+    assert blocks[-1].data.cells[0].paragraph.runs[0].text == "보고서 입력"
+    assert blocks[-2].data == (report.parent / "assets/logo.png").read_bytes()
+    assert blocks[-3].data == (static.parent / "assets/logo.png").read_bytes()
 
 
 @pytest.mark.parametrize("path", ["../run/data/tables.xlsx", "../run/assets/logo.png"])
@@ -148,4 +155,39 @@ def test_assets_alone_can_supply_all_resource_roles(tmp_path):
     assets["tables"]["table"] = dict(assets["tables"]["cover"])
     assets["images"]["logo"] = dict(assets["images"]["brand"])
     static.write_text(yaml.safe_dump(assets, allow_unicode=True), encoding="utf-8")
+    config["variables"]["resource"] = "assets.vars"
+    (root / "document.yaml").write_text(yaml.safe_dump(config), encoding="utf-8")
+    section = root / "sections/body.yaml"
+    content = (
+        section.read_text(encoding="utf-8")
+        .replace("resource: table", "resource: assets.table")
+        .replace("resource: logo", "resource: assets.logo")
+    )
+    section.write_text(content, encoding="utf-8")
     assert dict(load_project(root).variables) == {"month": "보고서 입력"}
+
+
+def test_unqualified_reference_never_falls_back_to_assets(tmp_path):
+    root, _static, report = setup_assets(tmp_path)
+    path = root / "sections/body.yaml"
+    path.write_text(path.read_text(encoding="utf-8").replace("assets.brand", "brand"), encoding="utf-8")
+    with pytest.raises(BuildError, match="RESOURCE_NOT_FOUND") as caught:
+        load_project(root, resources=report)
+    assert "brand" in caught.value.diagnostic.message
+
+
+def test_qualified_names_do_not_alias_literal_dotted_keys(tmp_path):
+    root, _static, report = setup_assets(tmp_path)
+    data = yaml.safe_load(report.read_text(encoding="utf-8"))
+    data["tables"]["assets.cover"] = dict(data["tables"]["table"])
+    report.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
+    path = root / "sections/body.yaml"
+    section = yaml.safe_load(path.read_text(encoding="utf-8"))
+    section["layer"]["contents"].append({"type": "table", "resource": "resources.assets.cover"})
+    section["layer"]["contents"].append({"type": "table", "resource": "resources.table"})
+    path.write_text(yaml.safe_dump(section, allow_unicode=True), encoding="utf-8")
+    document = load_project(root, resources=report)
+    blocks = document.sections[0].contents
+    assert blocks[0].data.cells[0].paragraph.runs[0].text == "공통 표지"
+    assert blocks[-2].data.cells[0].paragraph.runs[0].text == "보고서 입력"
+    assert blocks[-1].data is blocks[2].data  # qualified/default resources share a cache entry

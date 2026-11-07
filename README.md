@@ -64,8 +64,8 @@ hwpx-builder --version
 | 컴포넌트 | 역할 / 현재 지원 |
 |---|---|
 | Document | `document.yaml` 진입점, 기본값·리소스·변수·섹션 순서 |
-| Assets | 템플릿에 고정되는 표지 XLSX·공통 이미지. resources와 같은 형식이며 실행 인자로 교체하지 않음 |
-| Resources | 보고서별 XLSX 표·변수·이미지 등록. `--resources`로 이 부분만 전체 교체 |
+| Assets | 템플릿에 고정되는 표지 XLSX·공통 이미지. resources와 같은 형식. `assets.이름`으로 참조하며 실행 인자로 교체하지 않음 |
+| Resources | 보고서별 XLSX 표·변수·이미지. `resources.이름`으로 참조하며 `--resources`로 이 부분만 전체 교체 |
 | Section | 논리 구역과 글자/들여쓰기 설정. 파일로 분리 가능 |
 | PageSetup | 용지·방향·여백. 흐름 중 용지 변경은 미지원 |
 | Layer | 섹션의 콘텐츠 흐름. 현재 `single_column`만 지원 |
@@ -114,7 +114,7 @@ defaults:
   section_style: {indent_by_depth: [0, 5, 10, 15]}
 assets: {file_path: assets.yaml}
 resources: {file_path: resources.yaml}
-variables: {resource: document_variables}
+variables: {resource: resources.document_variables}
 sections:
   - src: sections/overview.yaml
 ```
@@ -149,7 +149,7 @@ images:
   logo: {path: data/logo.png}
 ```
 
-assets와 resources 모두 tables/images를 등록할 수 있습니다. 두 목록을 합쳐 같은 이름으로 참조하므로 콘텐츠에서는 어느 파일에 있는지 구별하지 않습니다. 같은 종류의 이름이 겹치면 `DUPLICATE_RESOURCE` 오류이며, 자동 덮어쓰기는 없습니다.
+assets와 resources 모두 tables/images를 등록할 수 있지만 **네임스페이스는 서로 독립적**입니다. 양쪽에 같은 `logo` 이름이 있어도 `assets.logo`와 `resources.logo`로 각각 참조합니다. 접두사 없는 기존 참조는 resources만 조회하며 assets로 자동 탐색하지 않습니다. 각 파일의 정의 키에는 접두사를 붙이지 않습니다.
 
 `variables.xlsx`의 `variables` 시트는 아래처럼 정확히 두 열로 작성합니다. 완성 표와 **다른 XLSX 파일**이어야 합니다. `header: true`이면 첫 행을 제목으로 제외합니다. 값은 빈칸도 허용하며 변수명은 비어 있거나 중복되면 안 됩니다.
 
@@ -173,10 +173,10 @@ layer:
     - type: container
       contents:
         - type: image
-          resource: logo
+          resource: assets.logo
           image_style: {width: 20, fit: contain}
     - type: table
-      resource: production
+      resource: resources.production
       headernote:
         text: 생산 현황
         paragraph_style: {line_spacing: '100%', space_before: 0, space_after: 0}
@@ -260,7 +260,7 @@ print(result.output, result.tables, result.images)
 
 ## 고정 assets와 보고서별 resources.yaml
 
-템플릿의 섹션·스타일·표지·공통 로고는 공유하고, 보고서별 변수와 본문 표만 바꿉니다. `assets`와 `resources`는 **동일한 리소스 형식**이며 교체 범위만 다릅니다. 실제 업무 자료를 넣는 reports/는 Git에서 제외됩니다.
+템플릿의 섹션·스타일·표지·공통 로고는 공유하고, 보고서별 변수와 본문 표만 바꿉니다. `assets`와 `resources`는 **동일한 리소스 형식**이며 교체 범위와 참조 네임스페이스가 다릅니다. 실제 업무 자료를 넣는 reports/는 Git에서 제외됩니다.
 
 ```text
 template/
@@ -309,7 +309,20 @@ uv run hwpx-builder validate template --resources reports/2030-05/resources.yaml
 uv run hwpx-builder build template --resources reports/2030-05/resources.yaml --output output/2030-05.hwpx
 ```
 
-`--resources`는 **Document.resources 전체를 교체하며 Document.assets는 유지**합니다. 고정 표지나 로고를 보고서마다 다시 등록하지 않습니다. 교체 파일에는 필요한 보고서 입력 이름을 모두 등록해야 합니다. assets와 같은 종류·이름을 등록하면 오류입니다.
+`--resources`는 **Document.resources 전체를 교체하며 Document.assets는 유지**합니다. 고정 표지나 로고를 보고서마다 다시 등록하지 않습니다. 교체 파일에는 필요한 보고서 입력 이름을 모두 등록해야 합니다. assets와 같은 이름을 등록해도 네임스페이스가 달라 충돌하지 않습니다.
+
+콘텐츠에서는 리소스의 출처를 명시합니다.
+
+```yaml
+variables: {resource: resources.document_variables}
+# layer.contents의 예
+# - type: table
+#   resource: assets.table_01
+# - type: table
+#   resource: resources.table_03
+```
+
+리소스 네임스페이스는 변수의 이름과 별개입니다. 변수 값을 삽입하는 `<ref:factory_name>`에는 접두사를 붙이지 않습니다.
 
 이 예의 assets 안 `data/...`는 template 기준, 보고서 resources 안 `data/...`는 reports/2030-05 기준입니다. 상대 데이터는 각 기준 폴더 밖으로 벗어날 수 없으며 외부 공유 파일은 절대 경로로 지정합니다. CLI의 --resources/--output은 터미널 pwd 기준, YAML의 섹션·스타일·file_path는 document.yaml 기준입니다. Python API의 상대 resources/output은 기존 문서 루트 기준을 유지합니다.
 
