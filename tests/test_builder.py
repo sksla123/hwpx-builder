@@ -409,19 +409,21 @@ assert not any(n == 'scripts' or n.startswith('scripts.') for n in sys.modules)
     assert "extract" not in help_result.stdout
 
 
-def test_cli_output_directory_is_working_directory_relative(tmp_path, monkeypatch, capsys):
+def test_cli_output_is_working_directory_relative(tmp_path, monkeypatch, capsys):
     from hwpx_builder.cli import main
 
     root = tmp_path / "문서"
     root.mkdir()
     project(root, [{"type": "paragraph", "text": "가상 예제"}])
     monkeypatch.chdir(tmp_path)
-    assert main(["build", str(root), "--output-dir", "결과 폴더"]) == 0
-    assert (tmp_path / "결과 폴더/output.hwpx").is_file()
+    assert main(["build", str(root), "--output", "결과 폴더/report.hwpx"]) == 0
+    assert (tmp_path / "결과 폴더/report.hwpx").is_file()
     assert '"output"' in capsys.readouterr().out
-    absolute = tmp_path / "absolute"
-    assert main(["build", str(root), "--output-dir", str(absolute)]) == 0
-    assert (absolute / "output.hwpx").is_file()
+    assert main(["build", str(root)]) == 0
+    assert (tmp_path / "output.hwpx").is_file()
+    absolute = tmp_path / "absolute.hwpx"
+    assert main(["build", str(root), "--output", str(absolute)]) == 0
+    assert absolute.is_file()
     with pytest.raises(SystemExit) as caught:
-        main(["build", str(root), "--output-dir", "a", "--output", "b.hwpx"])
+        main(["build", str(root), "--output-dir", "removed-option"])
     assert caught.value.code == 2

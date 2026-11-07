@@ -31,14 +31,8 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     compilation = sub.add_parser("build", help="document.yaml에서 HWPX 생성")
     compilation.add_argument("project", type=Path)
-    destination = compilation.add_mutually_exclusive_group()
-    destination.add_argument(
-        "--output", type=Path, default=Path("output.hwpx"), help="출력 파일 (문서 루트 기준)"
-    )
-    destination.add_argument(
-        "--output-dir",
-        type=Path,
-        help="output.hwpx를 생성할 폴더 (현재 터미널 기준, --output과 함께 사용 불가)",
+    compilation.add_argument(
+        "--output", type=Path, default=Path("output.hwpx"), help="출력 파일 (현재 터미널 pwd 기준)"
     )
     compilation.add_argument("--debug", action="store_true", help="<ref:...> 치환 구간을 노란색으로 강조")
     compilation.add_argument("--warnings-as-errors", action="store_true")
@@ -49,17 +43,18 @@ def main(argv: list[str] | None = None) -> int:
             "--resources",
             type=Path,
             metavar="FILE_PATH",
-            help="resources 전체를 파일로 교체 (상대 경로: document.yaml 디렉터리)",
+            help="resources 전체를 파일로 교체 (현재 터미널 pwd 기준)",
         )
     args = parser.parse_args(argv)
     try:
+        resources = args.resources.resolve() if args.resources is not None else None
         if args.command == "build":
             result = build(
                 args.project,
-                args.output_dir.resolve() / "output.hwpx" if args.output_dir is not None else args.output,
+                args.output.resolve(),
                 debug=args.debug,
                 warnings_as_errors=args.warnings_as_errors,
-                resources=args.resources,
+                resources=resources,
             )
             print(
                 json.dumps(
@@ -75,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 0
         if args.command == "validate":
-            document = plan(load_project(args.project, resources=args.resources))
+            document = plan(load_project(args.project, resources=resources))
             print(
                 json.dumps(
                     {

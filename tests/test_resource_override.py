@@ -212,12 +212,14 @@ def test_invalid_file_path_reports_its_yaml_location(tmp_path, value):
     assert diagnostic.line and diagnostic.column
 
 
-def test_cli_build_and_validate_use_the_same_override(tmp_path, capsys):
-    root = template(tmp_path / "template")
+def test_cli_build_and_validate_use_the_same_override(tmp_path, monkeypatch, capsys):
+    template(tmp_path / "template")
     path = materials(tmp_path / "run", "8월")
-    assert main(["validate", str(root), "--resources", str(path)]) == 0
+    monkeypatch.chdir(tmp_path)
+    selected = str(path.relative_to(tmp_path))
+    assert main(["validate", "template", "--resources", selected]) == 0
     assert json.loads(capsys.readouterr().out)["variables"] == 1
     output = tmp_path / "report.hwpx"
-    assert main(["build", str(root), "--resources", str(path), "--output", str(output)]) == 0
+    assert main(["build", "template", "--resources", selected, "--output", "report.hwpx"]) == 0
     assert json.loads(capsys.readouterr().out)["tables"] == 1
     assert output.exists()

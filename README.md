@@ -143,9 +143,9 @@ layer:
         paragraph_style: {line_spacing: '100%', space_before: 0, space_after: 0}
 ```
 
-**파일 경로는 기본적으로 `document.yaml`이 있는 루트 폴더를 기준으로 해석합니다.** 섹션 파일 안의 스타일 src도 섹션 폴더가 아닌 문서 루트 기준입니다. 예외로 `resources: {file_path: ...}` 또는 `--resources`로 리소스 YAML을 불러오면, **그 YAML 안의 데이터 path만 해당 리소스 YAML이 있는 폴더 기준**입니다. 기존 `{src: ...}` 방식의 resources는 문서 루트 기준을 유지합니다.
+**YAML 안의 파일 경로는 기본적으로 `document.yaml`이 있는 루트 폴더를 기준으로 해석합니다.** 섹션 파일 안의 스타일 src도 섹션 폴더가 아닌 문서 루트 기준입니다. 예외로 `resources: {file_path: ...}` 또는 `--resources`로 리소스 YAML을 불러오면, **그 YAML 안의 데이터 path만 해당 리소스 YAML이 있는 폴더 기준**입니다. 기존 `{src: ...}` 방식의 resources는 문서 루트 기준을 유지합니다.
 
-상대 데이터 path는 기준 폴더보다 상위로 벗어날 수 없습니다. `..` 또는 심볼릭 링크 이탈도 거부합니다. 폴더 밖 공유 파일은 절대 경로로 지정합니다. Section·스타일·Include src는 항상 문서 루트 내부로 제한됩니다. `--output`의 상대 파일 경로는 문서 루트 기준입니다. **디렉터리를 받는 CLI 인자 `PROJECT`와 `--output-dir`은 현재 터미널 pwd 기준**입니다. 리소스 파일 선택 인자 `--resources`는 파일 인자이므로 문서 루트 기준을 유지합니다.
+상대 데이터 path는 기준 폴더보다 상위로 벗어날 수 없습니다. `..` 또는 심볼릭 링크 이탈도 거부합니다. 폴더 밖 공유 파일은 절대 경로로 지정합니다. Section·스타일·Include src는 항상 문서 루트 내부로 제한됩니다. **CLI의 `PROJECT`, `--output`, `--resources`는 모두 현재 터미널 pwd 기준**입니다. 기본 출력도 pwd의 `output.hwpx`입니다. YAML의 `resources.file_path`는 계속 document.yaml 기준이며, 선택한 리소스 YAML 내부의 데이터 path는 그 파일 기준입니다.
 
 길이·간격·좌표는 **mm 숫자**, 글자 크기는 **pt 숫자**, 줄간격은 **`'160%'` 문자열**입니다. `indent_depth: 2`는 단계표의 세 번째 값인 10mm를 선택합니다. 문단의 부모나 탭 개수를 해석하지 않습니다. 표 설명의 줄간격도 선언에서 변경할 수 있습니다.
 
@@ -173,18 +173,17 @@ Paragraph.text와 Run.text, 표 설명 문단에서 사용합니다. 태그는 �
 ## 실행 인자
 
 ```text
-hwpx-builder build PROJECT [--output PATH | --output-dir DIR] [--debug] [--warnings-as-errors] [--resources FILE_PATH]
+hwpx-builder build PROJECT [--output PATH] [--debug] [--warnings-as-errors] [--resources FILE_PATH]
 hwpx-builder validate PROJECT [--resources FILE_PATH]
 ```
 
 | 인자 | 명령 | 설명 |
 |---|---|---|
 | `PROJECT` | build / validate | document.yaml이 있는 디렉터리. 현재 작업 디렉터리 기준 |
-| `--output PATH` | build | 출력 경로. 기본 `output.hwpx`, 상대 경로는 문서 루트 기준 |
-| `--output-dir DIR` | build | 지정 폴더에 `output.hwpx` 생성. 상대 폴더는 **현재 터미널 pwd 기준**이며 `--output`과 동시 사용 불가 |
+| `--output PATH` | build | 출력 경로. 기본 `output.hwpx`, 상대 경로는 **현재 터미널 pwd 기준** |
 | `--debug` | build | 모든 ref 치환 구간을 노란색으로 강조. 고정 문구·표 내부 제외 |
 | `--warnings-as-errors` | build | 리소스 경고/진단이 있으면 출력 전에 실패 |
-| `--resources FILE_PATH` | build / validate | Document.resources 전체 교체. 파일 선택 경로는 문서 루트 기준 |
+| `--resources FILE_PATH` | build / validate | Document.resources 전체 교체. 파일 선택 경로는 **현재 터미널 pwd 기준** |
 | `-h`, `--help` | 전체 / 각 명령 | 해당 도움말 출력 |
 
 validate는 선언·리소스·일부 배치를 검사하며 파일 생성/재열기/화면 렌더는 하지 않습니다. build는 HWPX 생성, ZIP/XML/관계/격자 검사, 재열기를 마친 뒤 출력 파일을 원자적으로 교체합니다. 성공은 종료 코드 0과 stdout JSON, 실패는 종료 코드 1과 stderr 진단 JSON으로 반환합니다. YAML 오류는 실제 파일·줄·열·속성 경로와 참조 경로를 제공합니다.
@@ -195,14 +194,13 @@ validate는 선언·리소스·일부 배치를 검사하며 파일 생성/재�
 
 ```sh
 uv run hwpx-builder validate template
-uv run hwpx-builder build template --output-dir output/factory
-uv run hwpx-builder build template --output ../output/factory-report.hwpx
-uv run hwpx-builder build template --output ../output/factory-report-debug.hwpx --debug
-uv run hwpx-builder build examples/variables --output ../../output/variables.hwpx --debug
+uv run hwpx-builder build template --output output/factory-report.hwpx
+uv run hwpx-builder build template --output output/factory-report-debug.hwpx --debug
+uv run hwpx-builder build examples/variables --output output/variables.hwpx --debug
 uv run pytest -q
 ```
 
-Python에서도 같은 빌더를 사용할 수 있습니다.
+Python에서도 같은 빌더를 사용할 수 있습니다. **Python API의 상대 output/resources 인자는 document.yaml 디렉터리 기준**입니다. CLI는 터미널 기준 경로를 절대 경로로 변환해 API에 전달합니다.
 
 ```python
 from hwpx_builder import build, load_project
@@ -245,16 +243,16 @@ images:
 ```
 
 ```sh
-uv run hwpx-builder validate template --resources ../reports/2030-05/resources.yaml
-uv run hwpx-builder build template --resources ../reports/2030-05/resources.yaml --output ../output/2030-05.hwpx
+uv run hwpx-builder validate template --resources reports/2030-05/resources.yaml
+uv run hwpx-builder build template --resources reports/2030-05/resources.yaml --output output/2030-05.hwpx
 ```
 
-`--resources`는 병합이 아니라 **전체 교체**입니다. 이 예의 `data/...`는 reports/2030-05 기준이며 표지 2개 표만 외부 절대 경로를 사용합니다. 스타일·섹션과 상대 output은 계속 template/document.yaml 기준입니다.
+`--resources`는 병합이 아니라 **전체 교체**입니다. 이 예의 `data/...`는 reports/2030-05 기준이며 표지 2개 표만 외부 절대 경로를 사용합니다. 스타일·섹션의 YAML 경로는 계속 template/document.yaml 기준이며, CLI의 --output은 터미널 pwd 기준입니다.
 
 바로 실행 가능한 동일한 패턴의 공개 예제도 제공합니다.
 
 ```sh
-uv run hwpx-builder build template --resources ../examples/factory_report/resources.yaml --output ../output/override-example.hwpx
+uv run hwpx-builder build template --resources examples/factory_report/resources.yaml --output output/override-example.hwpx
 ```
 
 ```python
