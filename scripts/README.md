@@ -13,3 +13,5 @@ uv run python -m scripts.extract_reference --help
 ```
 
 실제 자료는 reports/ 등 Git에서 제외된 로컬 폴더에 두고 별도 백업한다. 문서 빌드 시 추출/복구/이관 도구를 자동 실행하지 않는다.
+
+- build_standalone.py: 해당 OS에서 독립 실행 파일을 빌드하고, 공개 가상 예제만 묶어 실제 ZIP의 버전/검증/문서 생성을 검사한다. `uv run --group release python -m scripts.build_standalone`으로 실행한다.
