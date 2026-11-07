@@ -1,0 +1,7 @@
+schema_version: '1.0'
+type: resources
+tables:
+  document_variables:
+    path: data/variables.xlsx
+    sheet: variables
+    header: true

@@ -1,0 +1,19 @@
+schema_version: '1.0'
+type: document
+defaults:
+  page:
+    src: styles/page/report.yaml
+  text_style:
+    src: styles/text/body.yaml
+  paragraph_style:
+    src: styles/paragraph/body.yaml
+  section_style:
+    src: styles/section/default.yaml
+resources:
+  file_path: resources.yaml
+variables:
+  resource: document_variables
+sections:
+- src: sections/00-cover.yaml
+- src: sections/01-production.yaml
+- src: sections/02-inspection.yaml

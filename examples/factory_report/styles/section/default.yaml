@@ -1,0 +1,7 @@
+schema_version: '1.0'
+type: section_style
+indent_by_depth:
+- 0
+- 5
+- 10
+- 15

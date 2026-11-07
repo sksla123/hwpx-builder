@@ -1,0 +1,23 @@
+schema_version: '1.0'
+type: section
+layer:
+  type: single_column
+  contents:
+  - type: container
+    contents:
+    - type: image
+      resource: demo_logo
+      image_style:
+        width: 20
+        align: center
+  - type: table
+    resource: table_01
+  - type: paragraph
+    text: '작성연월: <ref:written_year_month>'
+  - type: paragraph
+    text: '운영기간: <ref:reporting_period>'
+  - type: table
+    resource: table_02
+  - type: paragraph
+    text: '작성자: <ref:author> / <ref:department>'
+  - type: pagebreak

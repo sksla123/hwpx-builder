@@ -1,0 +1,22 @@
+schema_version: '1.0'
+type: document
+resources:
+  file_path: resources.yaml
+variables:
+  resource: document_variables
+sections:
+- layer:
+    type: single_column
+    contents:
+    - type: paragraph
+      text: 'factory_name: <ref:factory_name>'
+    - type: paragraph
+      text: 'reporting_period: <ref:reporting_period>'
+    - type: paragraph
+      text: 'written_year_month: <ref:written_year_month>'
+    - type: paragraph
+      text: 'department: <ref:department>'
+    - type: paragraph
+      text: 'summary: <ref:summary>'
+    - type: paragraph
+      text: 'author: <ref:author>'

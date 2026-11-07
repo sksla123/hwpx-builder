@@ -1,0 +1,22 @@
+schema_version: '1.0'
+type: resources
+tables:
+  document_variables:
+    path: data/variables.xlsx
+    sheet: variables
+    header: true
+  table_01:
+    path: /Users/jy/Workspace/hwpx-builder/template/data/cover.xlsx
+    sheet: table_01
+  table_02:
+    path: /Users/jy/Workspace/hwpx-builder/template/data/cover.xlsx
+    sheet: table_02
+  table_03:
+    path: data/tables.xlsx
+    sheet: table_03
+  table_04:
+    path: data/tables.xlsx
+    sheet: table_04
+images:
+  demo_logo:
+    path: data/demo-logo.png

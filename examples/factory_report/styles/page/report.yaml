@@ -1,0 +1,8 @@
+schema_version: '1.0'
+type: page_setup
+size: A4
+margin:
+  left: 20
+  right: 20
+  top: 20
+  bottom: 15

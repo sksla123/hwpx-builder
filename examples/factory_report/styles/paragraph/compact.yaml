@@ -1,0 +1,5 @@
+schema_version: '1.0'
+type: paragraph_style
+line_spacing: 100%
+space_before: 0
+space_after: 0

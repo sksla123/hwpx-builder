@@ -1,0 +1,5 @@
+schema_version: '1.0'
+type: text_style
+font_family: 함초롬돋움
+font_size: 18
+bold: true

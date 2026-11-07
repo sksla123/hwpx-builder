@@ -1,0 +1,277 @@
+# HWPX Builder
+
+## Description
+
+YAML로 문서 구조를 선언하고, 완성된 Excel 표·문서 변수·이미지를 조립해 HWPX를 만드는 템플릿 기반 빌더입니다.
+
+표의 값·병합·치수·글꼴·서식은 XLSX에서 가져옵니다. 문서 변수는 별도의 2열 XLSX에서 읽습니다. 계산식 평가, 집계, 업무 규칙, 표 생성은 입력 자료를 준비하는 쪽에서 처리하며 빌더는 선언된 내용을 조립합니다.
+
+저장소의 `template/`과 `examples/` 공개 자료는 **“농Shim 제 1공장”이라는 가상 설정으로 새로 만든 예제**입니다. 실제 기업의 보고서·실적·로고를 포함하지 않습니다. 스키마 버전은 `1.0`, 패키지 버전은 `pyproject.toml`에서 관리합니다.
+
+## 설치
+
+Python **3.11 이상**이 필요합니다. 개발 및 예제 실행에는 [uv](https://docs.astral.sh/uv/getting-started/installation/)를 사용합니다. HWPX 생성에는 Excel이나 한컴 GUI 설치가 필요하지 않습니다. 결과를 화면에서 확인할 때는 호환 뷰어와 문서에 지정한 글꼴이 필요합니다.
+
+```sh
+git clone https://github.com/sksla123/hwpx-builder.git
+cd hwpx-builder
+uv sync --locked
+uv run python -m scripts.split_cover
+```
+
+마지막 명령은 공통 표지 `template/data/cover.xlsx`의 **현재 컴퓨터 절대 경로**를 예제 resources.yaml에 기록합니다. 새 체크아웃이나 폴더 이동 후 다시 실행합니다.
+
+CLI만 설치하려면 저장소 루트에서 다음을 실행할 수 있습니다. 템플릿과 예제는 저장소에서 별도로 가져옵니다.
+
+```sh
+python -m pip install .
+hwpx-builder --help
+```
+
+## 컴포넌트
+
+| 컴포넌트 | 역할 / 현재 지원 |
+|---|---|
+| Document | `document.yaml` 진입점, 기본값·리소스·변수·섹션 순서 |
+| Resources | 이름별 XLSX 표와 이미지 등록, 외부 리소스 파일 선택 |
+| Section | 논리 구역과 글자/들여쓰기 설정. 파일로 분리 가능 |
+| PageSetup | 용지·방향·여백. 흐름 중 용지 변경은 미지원 |
+| Layer | 섹션의 콘텐츠 흐름. 현재 `single_column`만 지원 |
+| Paragraph / Run | 문단과 부분 서식 구간 |
+| Table | 완성 XLSX 표 가져오기. YAML 행·셀 생성/서식 덮어쓰기 없음 |
+| Note | `headernote`/`footernote`로 표·흐름 Container 앞뒤 설명 |
+| Container | 콘텐츠 묶음과 Image의 직접 부모. 제한된 고정 그룹 지원 |
+| Image | PNG/JPEG/BMP. Container 안에서 크기·정렬 선언 |
+| PageBreak | 명시적 쪽 나눔 |
+| Include | 별도 `type: blocks` 파일을 현재 흐름에 삽입 |
+| Reference | 2열 변수 표의 평면 키를 `<ref:키>`로 치환 |
+| Styles | 인라인 또는 `{src: ...}` 공통 스타일 파일 |
+| SectionStyle | mm 단위 들여쓰기 단계표와 문단의 `indent_depth` |
+
+TextStyle·ParagraphStyle·SectionStyle·ImageStyle·ContainerStyle을 사용할 수 있습니다. Row/Cell/TableStyle은 독립 YAML 입력으로 제공하지 않으며 Excel의 서식을 사용합니다. 페이지별 Header/Footer/PageNumber, Field, Repeat/Condition, 일반 자유 배치는 현재 미지원입니다.
+
+## Config 작성 예시
+
+다음은 최소 문서 구조입니다. 외부 선언 파일에도 `schema_version: '1.0'`과 해당 `type`을 씁니다.
+
+```text
+my-report/
+  document.yaml
+  resources.yaml
+  data/
+    variables.xlsx
+    tables.xlsx
+    logo.png
+  styles/
+    body.yaml
+  sections/
+    overview.yaml
+```
+
+```yaml
+# my-report/document.yaml
+schema_version: '1.0'
+type: document
+defaults:
+  page:
+    size: A4
+    margin: {left: 20, right: 20, top: 20, bottom: 15}
+  text_style: {src: styles/body.yaml}
+  paragraph_style: {line_spacing: '160%', space_before: 2, space_after: 1}
+  section_style: {indent_by_depth: [0, 5, 10, 15]}
+resources: {file_path: resources.yaml}
+variables: {resource: document_variables}
+sections:
+  - src: sections/overview.yaml
+```
+
+```yaml
+# my-report/styles/body.yaml
+schema_version: '1.0'
+type: text_style
+font_family: 휴먼명조
+font_size: 11
+```
+
+```yaml
+# my-report/resources.yaml
+schema_version: '1.0'
+type: resources
+tables:
+  document_variables:
+    path: data/variables.xlsx
+    sheet: variables
+    header: true
+  production:
+    path: data/tables.xlsx
+    sheet: production
+images:
+  logo: {path: data/logo.png}
+```
+
+`variables.xlsx`의 `variables` 시트는 아래처럼 정확히 두 열로 작성합니다. 완성 표와 **다른 XLSX 파일**이어야 합니다. `header: true`이면 첫 행을 제목으로 제외합니다. 값은 빈칸도 허용하며 변수명은 비어 있거나 중복되면 안 됩니다.
+
+| name | value |
+|---|---|
+| factory_name | 농Shim 제 1공장 |
+| reporting_period | 2030.04.01.~2030.04.30. |
+
+```yaml
+# my-report/sections/overview.yaml
+schema_version: '1.0'
+type: section
+layer:
+  type: single_column
+  contents:
+    - type: paragraph
+      text: '<bold><ref:factory_name></bold> 운영보고서'
+    - type: paragraph
+      indent_depth: 1
+      text: '기간: <ref:reporting_period>'
+    - type: container
+      contents:
+        - type: image
+          resource: logo
+          image_style: {width: 20, fit: contain}
+    - type: table
+      resource: production
+      headernote:
+        text: 생산 현황
+        paragraph_style: {line_spacing: '100%', space_before: 0, space_after: 0}
+      footernote:
+        text: '※ 가상 예제 자료입니다.'
+        paragraph_style: {line_spacing: '100%', space_before: 0, space_after: 0}
+```
+
+**파일 경로는 기본적으로 `document.yaml`이 있는 루트 폴더를 기준으로 해석합니다.** 섹션 파일 안의 스타일 src도 섹션 폴더가 아닌 문서 루트 기준입니다. 예외로 `resources: {file_path: ...}` 또는 `--resources`로 리소스 YAML을 불러오면, **그 YAML 안의 데이터 path만 해당 리소스 YAML이 있는 폴더 기준**입니다. 기존 `{src: ...}` 방식의 resources는 문서 루트 기준을 유지합니다.
+
+상대 데이터 path는 기준 폴더보다 상위로 벗어날 수 없습니다. `..` 또는 심볼릭 링크 이탈도 거부합니다. 폴더 밖 공유 파일은 절대 경로로 지정합니다. Section·스타일·Include src는 항상 문서 루트 내부로 제한됩니다. `--output`의 상대 파일 경로는 문서 루트 기준입니다. **디렉터리를 받는 CLI 인자 `PROJECT`와 `--output-dir`은 현재 터미널 pwd 기준**입니다. 리소스 파일 선택 인자 `--resources`는 파일 인자이므로 문서 루트 기준을 유지합니다.
+
+길이·간격·좌표는 **mm 숫자**, 글자 크기는 **pt 숫자**, 줄간격은 **`'160%'` 문자열**입니다. `indent_depth: 2`는 단계표의 세 번째 값인 10mm를 선택합니다. 문단의 부모나 탭 개수를 해석하지 않습니다. 표 설명의 줄간격도 선언에서 변경할 수 있습니다.
+
+## 텍스트 태그
+
+Paragraph.text와 Run.text, 표 설명 문단에서 사용합니다. 태그는 대소문자를 구분하며 XML/HTML 문법 전체를 지원하지 않습니다.
+
+| 태그 | 예시 | 효과 |
+|---|---|---|
+| ref | `<ref:factory_name>` | 변수 표의 정확한 평면 키 치환 |
+| bold | `<bold>내용</bold>` | 굵게 |
+| italic | `<italic>내용</italic>` | 기울임 |
+| underline | `<underline>내용</underline>` | 밑줄 |
+| strike | `<strike>내용</strike>` | 취소선 |
+| highlight | `<highlight:yellow>내용</highlight>` | 글자 배경색 |
+| color | `<color:#FF0000>내용</color>` | 글자색 |
+| size | `<size:14>내용</size>` | 14pt 글자 크기 |
+| linebreak | `첫 줄<linebreak>다음 줄` | 같은 문단 안의 명시적 줄바꿈 |
+| nat | `<nat><ref:그대로><\nat>` | 내부를 태그/엔터티 해석 없이 출력 |
+
+서식 태그는 중첩할 수 있고 정확한 순서로 닫아야 합니다. `ref`와 `linebreak`에는 종료 태그가 없습니다. `nat`의 종료는 `</nat>`가 아닌 **`<\nat>`**입니다. nat 밖에서는 `&lt;`, `&gt;`, `&amp;`만 기호로 변환합니다. 색은 black/white/red/green/blue/yellow/gray 또는 `#RRGGBB`를 사용합니다.
+
+변수 치환값과 Excel 셀 문자열은 다시 태그로 해석하지 않습니다. 일반 문자열의 LF 대신 `<linebreak>`로 명시적 줄바꿈을 선언합니다.
+
+## 실행 인자
+
+```text
+hwpx-builder build PROJECT [--output PATH | --output-dir DIR] [--debug] [--warnings-as-errors] [--resources FILE_PATH]
+hwpx-builder validate PROJECT [--resources FILE_PATH]
+```
+
+| 인자 | 명령 | 설명 |
+|---|---|---|
+| `PROJECT` | build / validate | document.yaml이 있는 디렉터리. 현재 작업 디렉터리 기준 |
+| `--output PATH` | build | 출력 경로. 기본 `output.hwpx`, 상대 경로는 문서 루트 기준 |
+| `--output-dir DIR` | build | 지정 폴더에 `output.hwpx` 생성. 상대 폴더는 **현재 터미널 pwd 기준**이며 `--output`과 동시 사용 불가 |
+| `--debug` | build | 모든 ref 치환 구간을 노란색으로 강조. 고정 문구·표 내부 제외 |
+| `--warnings-as-errors` | build | 리소스 경고/진단이 있으면 출력 전에 실패 |
+| `--resources FILE_PATH` | build / validate | Document.resources 전체 교체. 파일 선택 경로는 문서 루트 기준 |
+| `-h`, `--help` | 전체 / 각 명령 | 해당 도움말 출력 |
+
+validate는 선언·리소스·일부 배치를 검사하며 파일 생성/재열기/화면 렌더는 하지 않습니다. build는 HWPX 생성, ZIP/XML/관계/격자 검사, 재열기를 마친 뒤 출력 파일을 원자적으로 교체합니다. 성공은 종료 코드 0과 stdout JSON, 실패는 종료 코드 1과 stderr 진단 JSON으로 반환합니다. YAML 오류는 실제 파일·줄·열·속성 경로와 참조 경로를 제공합니다.
+
+## 실행 예제
+
+저장소 루트에서 실행합니다.
+
+```sh
+uv run hwpx-builder validate template
+uv run hwpx-builder build template --output-dir output/factory
+uv run hwpx-builder build template --output ../output/factory-report.hwpx
+uv run hwpx-builder build template --output ../output/factory-report-debug.hwpx --debug
+uv run hwpx-builder build examples/variables --output ../../output/variables.hwpx --debug
+uv run pytest -q
+```
+
+Python에서도 같은 빌더를 사용할 수 있습니다.
+
+```python
+from hwpx_builder import build, load_project
+
+model = load_project('template')
+result = build('template', '../output/factory-report.hwpx', debug=True)
+print(result.output, result.tables, result.images)
+```
+
+일반 XLSX 열 너비는 근사 변환이므로 경고가 발생할 수 있습니다. 캐시가 없는 수식, 지원하지 않는 Excel 서식, 본문보다 넓은 표는 오류를 반환합니다. 표는 자동 축소하지 않습니다. 물리 쪽 수와 전체 텍스트 넘침은 뷰어에서 별도로 확인합니다.
+
+## 템플릿과 보고서별 resources.yaml
+
+템플릿의 섹션과 스타일은 공유하고, 보고서별 입력을 별도 폴더에 둡니다. 실제 업무 자료를 넣는 reports/는 Git에서 제외됩니다.
+
+```text
+template/                     # document.yaml, sections/, styles/, 공통 표지
+reports/2030-05/
+  resources.yaml
+  data/
+    variables.xlsx
+    tables.xlsx
+    demo-logo.png
+```
+
+보고서의 resources.yaml에는 템플릿이 사용하는 이름을 **모두** 등록합니다. 아래 `/absolute/path/to/...`는 실제 컴퓨터의 절대 경로로 바꿉니다. Windows에서는 `C:/work/...` 같은 절대 경로를 사용합니다.
+
+```yaml
+# reports/2030-05/resources.yaml
+schema_version: '1.0'
+type: resources
+tables:
+  document_variables: {path: data/variables.xlsx, sheet: variables, header: true}
+  table_01: {path: /absolute/path/to/hwpx-builder/template/data/cover.xlsx, sheet: table_01}
+  table_02: {path: /absolute/path/to/hwpx-builder/template/data/cover.xlsx, sheet: table_02}
+  table_03: {path: data/tables.xlsx, sheet: table_03}
+  table_04: {path: data/tables.xlsx, sheet: table_04}
+images:
+  demo_logo: {path: data/demo-logo.png}
+```
+
+```sh
+uv run hwpx-builder validate template --resources ../reports/2030-05/resources.yaml
+uv run hwpx-builder build template --resources ../reports/2030-05/resources.yaml --output ../output/2030-05.hwpx
+```
+
+`--resources`는 병합이 아니라 **전체 교체**입니다. 이 예의 `data/...`는 reports/2030-05 기준이며 표지 2개 표만 외부 절대 경로를 사용합니다. 스타일·섹션과 상대 output은 계속 template/document.yaml 기준입니다.
+
+바로 실행 가능한 동일한 패턴의 공개 예제도 제공합니다.
+
+```sh
+uv run hwpx-builder build template --resources ../examples/factory_report/resources.yaml --output ../output/override-example.hwpx
+```
+
+```python
+from hwpx_builder import build
+
+build(
+    'template',
+    '../output/override-example.hwpx',
+    resources='../examples/factory_report/resources.yaml',
+    debug=True,
+)
+```
+
+## 문제 제보
+
+오류나 지원이 필요한 기능은 [GitHub Issues](https://github.com/sksla123/hwpx-builder/issues)에 남겨 주세요. 실행 명령, 패키지/Python/OS 버전, 진단 JSON, 재현 가능한 **가상 데이터**를 함께 주시면 확인하기 쉽습니다. 실제 회사 자료, 개인정보, 비공개 Excel·문서·로고는 올리지 마세요.
+
+## License
+
+[MIT License](LICENSE). 의존 라이브러리에는 각 라이브러리의 라이선스가 적용됩니다.

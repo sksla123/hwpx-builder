@@ -1,0 +1,19 @@
+schema_version: '1.0'
+type: section
+layer:
+  type: single_column
+  contents:
+  - type: paragraph
+    text: 2. 설비 점검
+    text_style:
+      src: styles/text/title.yaml
+  - type: table
+    resource: table_04
+    headernote:
+      text: 설비별 점검 결과
+      paragraph_style:
+        src: styles/paragraph/compact.yaml
+    footernote:
+      text: ※ <ref:reporting_period> 가상 기록
+      paragraph_style:
+        src: styles/paragraph/compact.yaml

@@ -1,0 +1,24 @@
+schema_version: '1.0'
+type: section
+layer:
+  type: single_column
+  contents:
+  - type: paragraph
+    text: 1. 생산 현황
+    text_style:
+      src: styles/text/title.yaml
+  - type: paragraph
+    text: <ref:summary>
+  - type: table
+    resource: table_03
+    headernote:
+      text: 제품별 생산 및 출하
+      paragraph_style:
+        src: styles/paragraph/compact.yaml
+    footernote:
+      text: ※ 공개 예제용 가상 수치입니다.
+      paragraph_style:
+        src: styles/paragraph/compact.yaml
+      indent_depth: 1
+  - type: paragraph
+    text: 작성 기준<linebreak>완성된 표를 그대로 가져옵니다.
