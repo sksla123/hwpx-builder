@@ -427,3 +427,14 @@ def test_cli_output_is_working_directory_relative(tmp_path, monkeypatch, capsys)
     with pytest.raises(SystemExit) as caught:
         main(["build", str(root), "--output-dir", "removed-option"])
     assert caught.value.code == 2
+
+
+def test_cli_version_matches_package_metadata(capsys):
+    from importlib.metadata import version
+
+    from hwpx_builder.cli import main
+
+    with pytest.raises(SystemExit) as caught:
+        main(["--version"])
+    assert caught.value.code == 0
+    assert capsys.readouterr().out.strip() == f"hwpx-builder {version('hwpx-builder')}"

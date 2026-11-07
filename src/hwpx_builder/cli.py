@@ -4,6 +4,7 @@ import argparse
 import json
 import logging
 import sys
+from importlib.metadata import version
 from pathlib import Path
 from zipfile import BadZipFile
 
@@ -28,6 +29,9 @@ def main(argv: list[str] | None = None) -> int:
 
     logging.getLogger("hwpx.opc.package").addFilter(TemplateFallbacks())
     parser = argparse.ArgumentParser(description="Declarative, Excel-backed HWPX builder")
+    parser.add_argument(
+        "--version", action="version", version=f"hwpx-builder {version('hwpx-builder')}", help="현재 패키지 버전 출력"
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     compilation = sub.add_parser("build", help="document.yaml에서 HWPX 생성")
     compilation.add_argument("project", type=Path)

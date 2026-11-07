@@ -26,6 +26,7 @@ CLI만 설치하려면 저장소 루트에서 다음을 실행할 수 있습니�
 ```sh
 python -m pip install .
 hwpx-builder --help
+hwpx-builder --version
 ```
 
 ## 컴포넌트
@@ -175,6 +176,7 @@ Paragraph.text와 Run.text, 표 설명 문단에서 사용합니다. 태그는 �
 ```text
 hwpx-builder build PROJECT [--output PATH] [--debug] [--warnings-as-errors] [--resources FILE_PATH]
 hwpx-builder validate PROJECT [--resources FILE_PATH]
+hwpx-builder --version
 ```
 
 | 인자 | 명령 | 설명 |
@@ -184,6 +186,7 @@ hwpx-builder validate PROJECT [--resources FILE_PATH]
 | `--debug` | build | 모든 ref 치환 구간을 노란색으로 강조. 고정 문구·표 내부 제외 |
 | `--warnings-as-errors` | build | 리소스 경고/진단이 있으면 출력 전에 실패 |
 | `--resources FILE_PATH` | build / validate | Document.resources 전체 교체. 파일 선택 경로는 **현재 터미널 pwd 기준** |
+| `--version` | 최상위 명령 | 설치된 패키지의 현재 버전 출력. 예: `hwpx-builder 0.1.0` |
 | `-h`, `--help` | 전체 / 각 명령 | 해당 도움말 출력 |
 
 validate는 선언·리소스·일부 배치를 검사하며 파일 생성/재열기/화면 렌더는 하지 않습니다. build는 HWPX 생성, ZIP/XML/관계/격자 검사, 재열기를 마친 뒤 출력 파일을 원자적으로 교체합니다. 성공은 종료 코드 0과 stdout JSON, 실패는 종료 코드 1과 stderr 진단 JSON으로 반환합니다. YAML 오류는 실제 파일·줄·열·속성 경로와 참조 경로를 제공합니다.
