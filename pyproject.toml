@@ -26,9 +26,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
-dev = ["pytest>=8,<10", "ruff>=0.14,<1"]
+dev = [
+    "pytest>=8,<10",
+    "pytest-xdist>=3.6,<4",
+    "ruff>=0.14,<1",
+]
 
 [tool.pytest.ini_options]
+addopts = "-n auto"
 testpaths = ["tests"]
 pythonpath = ["."]
 

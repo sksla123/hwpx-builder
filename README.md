@@ -200,8 +200,10 @@ uv run hwpx-builder validate template
 uv run hwpx-builder build template --output output/factory-report.hwpx
 uv run hwpx-builder build template --output output/factory-report-debug.hwpx --debug
 uv run hwpx-builder build examples/variables --output output/variables.hwpx --debug
-uv run pytest -q
+uv run pytest -n auto -q
 ```
+
+테스트는 `pytest-xdist`의 `-n auto`를 기본 설정으로 사용해 모든 CPU에서 병렬 실행합니다. 로컬과 CI 모두 같은 설정을 사용합니다.
 
 Python에서도 같은 빌더를 사용할 수 있습니다. **Python API의 상대 output/resources 인자는 document.yaml 디렉터리 기준**입니다. CLI는 터미널 기준 경로를 절대 경로로 변환해 API에 전달합니다.
 
