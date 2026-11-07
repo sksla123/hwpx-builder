@@ -26,6 +26,7 @@ from .model import (
     TextBox,
     TextStyle,
 )
+from .planner import constrain_table_note
 from .resources import Resources
 from .text import color, parse_text
 
@@ -412,15 +413,28 @@ class ProjectLoader:
                         "완성 표의 내부 값·서식은 선언에서 덮어쓸 수 없습니다.",
                     )
                 block.obj({"type", "resource", "headernote", "footernote"}, ("resource",))
-                for key in ("headernote",):
-                    if block.value.get(key) is not None:
-                        result.append(self.paragraph(block.child(key), text_style))
                 name = block.value["resource"]
                 if not isinstance(name, str):
                     block.source.fail("INVALID_VALUE", "resource 이름은 문자열이어야 합니다.")
-                result.append(Table(self.resources.table(name, block.source), block.source))
+                data = self.resources.table(name, block.source)
+                for key in ("headernote",):
+                    if block.value.get(key) is not None:
+                        result.append(
+                            constrain_table_note(
+                                self.paragraph(block.child(key), text_style),
+                                data,
+                                self.current_page.body_width,
+                            )
+                        )
+                result.append(Table(data, block.source))
                 if block.value.get("footernote") is not None:
-                    result.append(self.paragraph(block.child("footernote"), text_style))
+                    result.append(
+                        constrain_table_note(
+                            self.paragraph(block.child("footernote"), text_style),
+                            data,
+                            self.current_page.body_width,
+                        )
+                    )
             elif kind == "container":
                 block.obj(
                     {"type", "contents", "text_style", "container_style", "headernote", "footernote"},
@@ -654,6 +668,7 @@ class ProjectLoader:
             layer.obj({"type", "contents"}, ("type", "contents"))
             if layer.value["type"] != "single_column":
                 layer.source.fail("UNSUPPORTED_RENDERING", "single_column Layer만 지원합니다.")
+            self.current_page = section_page
             self.current_section = self.section_style(item.child("section_style"), default_section)
             inherited = self.text_style(item.child("text_style"), text_style)
             sections.append(
