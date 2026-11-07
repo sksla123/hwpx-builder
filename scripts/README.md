@@ -5,7 +5,7 @@ scripts는 공개 빌더 패키지에 포함하지 않는다. 원본 자료나 �
 - extract_tables.py / extract_images.py / reference_styles.py: 일반 HWPX 자료에서 표·이미지·서식 메모를 추출하는 도구.
 - extract_reference.py: 위 추출 CLI. 상대 경로는 실행 디렉터리 기준이다.
 - repair_xlsx.py: 기본 네임스페이스와 공백 전용 rich text의 xml:space 보존을 복구한다.
-- split_cover.py: 가상 공개 예제의 표지 분리 및 공유 표지 절대 경로 갱신. 이미 분리된 Excel은 다시 작성하지 않는다.
+- split_cover.py: 가상 공개 예제의 표지 분리 및 assets.yaml의 로컬 표지 경로 정리. 이미 분리된 Excel은 다시 작성하지 않는다.
 
 ```sh
 uv run python -m scripts.split_cover

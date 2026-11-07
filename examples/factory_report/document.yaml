@@ -17,3 +17,5 @@ sections:
 - src: sections/00-cover.yaml
 - src: sections/01-production.yaml
 - src: sections/02-inspection.yaml
+assets:
+  file_path: assets.yaml

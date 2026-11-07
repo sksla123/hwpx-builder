@@ -579,29 +579,11 @@ class ProjectLoader:
             contents.append(TextBox(paragraphs, x, y, w, h, pads))
         return Composition(tuple(contents), width, height, block.source)
 
-    def load(self):
-        root = self.file("document.yaml", "document")
-        root.obj(
-            {"defaults", "resources", "variables", "sections", "headers", "footers", "page_number"},
-            ("sections",),
-        )
-        for key in ("headers", "footers", "page_number"):
-            if root.value.get(key) not in (None, []):
-                root.child(key).source.fail(
-                    "UNSUPPORTED_RENDERING", f"{key}는 물리 페이지 검증기 구현 전까지 지원하지 않습니다."
-                )
-        defaults = root.child("defaults")
-        if defaults.value is None:
-            defaults = replace(defaults, value={})
-        defaults.obj({"page", "text_style", "paragraph_style", "section_style"})
-        default_section = self.section_style(defaults.child("section_style"), SectionStyle())
-        self.default_paragraph = self.paragraph_style(defaults.child("paragraph_style"), ParagraphStyle())
-        text_style = self.text_style(defaults.child("text_style"), TextStyle())
-        page = self.page(defaults.child("page"), Page())
-        resources = root.child("resources")
+    def resource_set(self, resources, override=None):
+        """Resolve either resource set with its own path boundary and source locations."""
         resource_root = self.root
-        if self.resources_override is not None:
-            resources = self.file(self.resources_override, "resources", root.stack, external_resources=True)
+        if override is not None:
+            resources = self.file(override, "resources", resources.stack, external_resources=True)
             resource_root = resources.source.path.parent
         elif isinstance(resources.value, dict) and "file_path" in resources.value:
             if set(resources.value) != {"file_path"}:
@@ -635,10 +617,47 @@ class ProjectLoader:
                         item.source.fail("INVALID_VALUE", "header는 boolean이어야 합니다.")
                     if "sheet" in item.value and not isinstance(item.value["sheet"], str):
                         item.source.fail("INVALID_VALUE", "sheet는 문자열이어야 합니다.")
-                    definitions[name] = (item.value, item.source)
+                    path = Resources(resource_root, {}, {}).path(item.value, item.source)
+                    definitions[name] = ({**item.value, "path": str(path)}, item.source)
             registries[category] = definitions
-        self.resources = Resources(resource_root, registries["tables"], registries["images"])
-        # Protect every registered input, including assets not used by the selected flow.
+        return registries
+
+    def load(self):
+        root = self.file("document.yaml", "document")
+        root.obj(
+            {"defaults", "assets", "resources", "variables", "sections", "headers", "footers", "page_number"},
+            ("sections",),
+        )
+        for key in ("headers", "footers", "page_number"):
+            if root.value.get(key) not in (None, []):
+                root.child(key).source.fail(
+                    "UNSUPPORTED_RENDERING", f"{key}는 물리 페이지 검증기 구현 전까지 지원하지 않습니다."
+                )
+        defaults = root.child("defaults")
+        if defaults.value is None:
+            defaults = replace(defaults, value={})
+        defaults.obj({"page", "text_style", "paragraph_style", "section_style"})
+        default_section = self.section_style(defaults.child("section_style"), SectionStyle())
+        self.default_paragraph = self.paragraph_style(defaults.child("paragraph_style"), ParagraphStyle())
+        text_style = self.text_style(defaults.child("text_style"), TextStyle())
+        page = self.page(defaults.child("page"), Page())
+        registries = {"tables": {}, "images": {}}
+        for definitions in (
+            self.resource_set(root.child("assets")),
+            self.resource_set(root.child("resources"), self.resources_override),
+        ):
+            for category, registry in definitions.items():
+                for name, (definition, origin) in registry.items():
+                    if name in registries[category]:
+                        previous = registries[category][name][1]
+                        origin.fail(
+                            "DUPLICATE_RESOURCE",
+                            f"리소스 이름이 중복되었습니다: {category}.{name} (기존 정의: {previous.path}{previous.pointer})",
+                        )
+                    registries[category][name] = (definition, origin)
+        self.resources = Resources(self.root, registries["tables"], registries["images"])
+        # All paths were confined within their own source's root before conversion
+        # to absolute paths. Protect inputs from both sets, including unused assets.
         for registry in registries.values():
             for definition, origin in registry.values():
                 self.resources.path(definition, origin)

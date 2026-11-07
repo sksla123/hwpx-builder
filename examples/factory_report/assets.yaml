@@ -1,0 +1,12 @@
+schema_version: '1.0'
+type: resources
+tables:
+  table_01:
+    path: data/cover.xlsx
+    sheet: table_01
+  table_02:
+    path: data/cover.xlsx
+    sheet: table_02
+images:
+  demo_logo:
+    path: data/demo-logo.png

@@ -78,7 +78,7 @@ def test_override_builds_two_reports_without_copying_template(tmp_path, monkeypa
     monkeypatch.chdir(tmp_path / "reports")
     original = (root / "document.yaml").read_bytes()
     for path in paths:
-        # CLI/API file selection is document-root relative, independent of cwd.
+        # Python API file selection is document-root relative, independent of cwd.
         selected = Path("..") / "reports" / path.parent.name / path.name
         document = load_project(root, resources=selected)
         assert document.root == root

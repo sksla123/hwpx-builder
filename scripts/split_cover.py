@@ -138,12 +138,12 @@ def split_report_covers():
             write_parts(source, select_sheets(source, tuple(n for n in names if n not in COVER)))
         elif not cover_path.is_file():
             raise ValueError("Cover sheets and shared cover workbook are missing")
-        reference = read(project / "document.yaml")["resources"]
-        path = project / reference.get("file_path", reference.get("src"))
-        resources = read(path)
+        reference = read(project / "document.yaml")["assets"]
+        path = project / reference["file_path"]
+        assets = read(path)
         for name in COVER:
-            resources["tables"][name]["path"] = str(cover_path.resolve())
-        save(path, resources)
+            assets["tables"][name]["path"] = "data/cover.xlsx"
+        save(path, assets)
 
 
 if __name__ == "__main__":

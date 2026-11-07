@@ -58,13 +58,6 @@ def smoke_test(executable, cwd, version):
     assert "{build,validate}" in run(executable, ["--help"], cwd)
     # Test inputs are created after extraction; they are never shipped in the ZIP.
     shutil.copytree(ROOT / "template", cwd / "example", ignore=shutil.ignore_patterns(".DS_Store"))
-    import yaml
-
-    config = cwd / "example/resources.yaml"
-    data = yaml.safe_load(config.read_text(encoding="utf-8"))
-    for key in ("table_01", "table_02"):
-        data["tables"][key]["path"] = "data/cover.xlsx"
-    config.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
     resources = "example/resources.yaml"
     validated = json.loads(run(executable, ["validate", "example", "--resources", resources], cwd))
     assert validated["valid"] and validated["variables"] == 6

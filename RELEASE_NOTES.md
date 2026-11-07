@@ -1,9 +1,10 @@
-표 설명 문단의 좌우 경계 처리를 수정한 v0.1.2 재배포본입니다.
+document.assets를 추가했습니다. assets와 resources는 동일한 리소스 형식을 사용하고, 실행 시 교체 범위만 구분합니다.
 
-- headernote/footernote의 문단 영역을 실제 표의 좌우 경계 안으로 제한합니다.
-- 표 정렬·위치·바깥 여백과 문단 들여쓰기를 반영합니다.
-- 들여쓰기가 설명 영역을 소진하면 TABLE_NOTE_NO_SPACE와 실제 YAML 위치를 보고합니다.
-- 줄간격·문단 간격·글자 스타일은 계속 선언에서 조절할 수 있습니다.
-- 네이티브 ZIP에는 실행 파일과 라이선스만 포함합니다. 예제는 GitHub에서 별도로 받습니다.
+- assets.yaml에는 고정 표지·공통 이미지, resources.yaml에는 보고서별 변수·본문 표를 둡니다.
+- --resources는 resources만 전체 교체하고 assets는 유지합니다.
+- 두 목록의 같은 종류·이름이 겹치면 DUPLICATE_RESOURCE로 실패합니다.
+- 각 file_path 파일의 상대 데이터 경로는 해당 파일 디렉터리 기준이며 상위/symlink 이탈을 금지합니다.
+- 기존 assets 없는 선언도 지원합니다. 스키마는 1.0을 유지합니다.
+- README의 컴포넌트·config·템플릿 실행 예제를 업데이트했습니다.
 
-기존 v0.1.2 배포본을 회수한 뒤 같은 버전으로 다시 게시했습니다.
+macOS Apple Silicon과 Windows x64용 실행 파일, Python 패키지를 제공합니다. 실행 파일 ZIP에는 바이너리와 라이선스만 포함합니다.
