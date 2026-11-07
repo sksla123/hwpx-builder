@@ -1,8 +1,7 @@
-macOS Apple Silicon 및 Windows x64용 독립 실행 파일을 추가했습니다. 각 ZIP에는 실행 파일, 가상 공장 예제, 라이선스가 포함됩니다. Python을 별도 설치할 필요가 없습니다.
+네이티브 배포 ZIP에서 예제·템플릿을 제거했습니다.
 
-- CLI의 --output과 --resources는 현재 터미널 pwd 기준입니다.
-- --output-dir은 제거했습니다.
-- --version으로 현재 패키지 버전을 확인할 수 있습니다.
-- 테스트는 모든 CPU에서 병렬 실행합니다.
+- macOS Apple Silicon 및 Windows x64 ZIP에는 실행 파일, LICENSE, THIRD_PARTY_NOTICES.txt만 포함됩니다.
+- 예제와 템플릿은 GitHub 저장소에서 별도로 받습니다.
+- 각 OS에서 실제 ZIP의 구성과 실행 파일의 버전·검증·문서 생성을 검사합니다. 검증용 입력은 임시 폴더에만 만들며 배포하지 않습니다.
 
-설치와 config 예시는 README를 참고하세요.
+설치 방법은 README를 참고하세요.

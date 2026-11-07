@@ -12,32 +12,32 @@ YAML로 문서 구조를 선언하고, 완성된 Excel 표·문서 변수·이�
 
 ### macOS / Windows 실행 파일
 
-[최신 릴리즈](https://github.com/sksla123/hwpx-builder/releases/latest)에서 OS에 맞는 ZIP을 받으세요. **Python이나 uv를 따로 설치할 필요가 없습니다.** 터미널에서 실행하는 CLI이며, ZIP에 실행 파일·가상 공장 예제·라이선스가 들어 있습니다.
+[최신 릴리즈](https://github.com/sksla123/hwpx-builder/releases/latest)에서 OS에 맞는 ZIP을 받으세요. **Python이나 uv를 따로 설치할 필요가 없습니다.** 터미널에서 실행하는 CLI이며, ZIP에는 실행 파일과 라이선스만 들어 있습니다. 예제·템플릿은 [GitHub 저장소](https://github.com/sksla123/hwpx-builder/tree/main/template)에서 별도로 가져옵니다.
 
 | OS / CPU | 다운로드 |
 |---|---|
-| macOS Apple Silicon (arm64) | [hwpx-builder-0.1.1-macos-arm64.zip](https://github.com/sksla123/hwpx-builder/releases/download/v0.1.1/hwpx-builder-0.1.1-macos-arm64.zip) |
-| Windows x64 | [hwpx-builder-0.1.1-windows-x64.zip](https://github.com/sksla123/hwpx-builder/releases/download/v0.1.1/hwpx-builder-0.1.1-windows-x64.zip) |
+| macOS Apple Silicon (arm64) | [hwpx-builder-0.1.2-macos-arm64.zip](https://github.com/sksla123/hwpx-builder/releases/download/v0.1.2/hwpx-builder-0.1.2-macos-arm64.zip) |
+| Windows x64 | [hwpx-builder-0.1.2-windows-x64.zip](https://github.com/sksla123/hwpx-builder/releases/download/v0.1.2/hwpx-builder-0.1.2-windows-x64.zip) |
 
 macOS에서는 다운로드 폴더에서 다음을 실행합니다.
 
 ```sh
-unzip hwpx-builder-0.1.1-macos-arm64.zip -d hwpx-builder
+unzip hwpx-builder-0.1.2-macos-arm64.zip -d hwpx-builder
 cd hwpx-builder
 ./hwpx-builder --version
-./hwpx-builder build example --output output/report.hwpx
+./hwpx-builder --help
 ```
 
 Windows PowerShell에서는 다음을 실행합니다.
 
 ```powershell
-Expand-Archive hwpx-builder-0.1.1-windows-x64.zip -DestinationPath hwpx-builder
+Expand-Archive hwpx-builder-0.1.2-windows-x64.zip -DestinationPath hwpx-builder
 cd hwpx-builder
 .\hwpx-builder.exe --version
-.\hwpx-builder.exe build example --output output/report.hwpx
+.\hwpx-builder.exe --help
 ```
 
-자신의 문서를 만들 때는 example 대신 document.yaml이 있는 폴더를 지정합니다. 실행 파일의 폴더를 PATH에 등록하면 다른 위치에서도 hwpx-builder 명령을 사용할 수 있습니다. 현재 macOS 배포본은 arm64 전용이며 Apple 개발자 서명/공증을 포함하지 않습니다. Windows 배포본도 코드 서명을 포함하지 않습니다.
+문서를 만들 때는 `build /path/to/my-report --output output/report.hwpx`처럼 document.yaml이 있는 폴더를 지정합니다. 저장소 템플릿을 복사했다면 resources.yaml의 표지 경로를 자신의 cover.xlsx 절대 경로로 변경합니다. 실행 파일의 폴더를 PATH에 등록하면 다른 위치에서도 hwpx-builder 명령을 사용할 수 있습니다. 현재 macOS 배포본은 arm64 전용이며 Apple 개발자 서명/공증을 포함하지 않습니다. Windows 배포본도 코드 서명을 포함하지 않습니다.
 
 ### Python 패키지 / 소스 설치
 
@@ -217,7 +217,7 @@ hwpx-builder --version
 | `--debug` | build | 모든 ref 치환 구간을 노란색으로 강조. 고정 문구·표 내부 제외 |
 | `--warnings-as-errors` | build | 리소스 경고/진단이 있으면 출력 전에 실패 |
 | `--resources FILE_PATH` | build / validate | Document.resources 전체 교체. 파일 선택 경로는 **현재 터미널 pwd 기준** |
-| `--version` | 최상위 명령 | 설치된 패키지의 현재 버전 출력. 예: `hwpx-builder 0.1.1` |
+| `--version` | 최상위 명령 | 설치된 패키지의 현재 버전 출력. 예: `hwpx-builder 0.1.2` |
 | `-h`, `--help` | 전체 / 각 명령 | 해당 도움말 출력 |
 
 validate는 선언·리소스·일부 배치를 검사하며 파일 생성/재열기/화면 렌더는 하지 않습니다. build는 HWPX 생성, ZIP/XML/관계/격자 검사, 재열기를 마친 뒤 출력 파일을 원자적으로 교체합니다. 성공은 종료 코드 0과 stdout JSON, 실패는 종료 코드 1과 stderr 진단 JSON으로 반환합니다. YAML 오류는 실제 파일·줄·열·속성 경로와 참조 경로를 제공합니다.

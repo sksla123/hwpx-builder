@@ -56,6 +56,15 @@ def smoke_test(executable, cwd, version):
 
     assert run(executable, ["--version"], cwd) == f"hwpx-builder {version}"
     assert "{build,validate}" in run(executable, ["--help"], cwd)
+    # Test inputs are created after extraction; they are never shipped in the ZIP.
+    shutil.copytree(ROOT / "template", cwd / "example", ignore=shutil.ignore_patterns(".DS_Store"))
+    import yaml
+
+    config = cwd / "example/resources.yaml"
+    data = yaml.safe_load(config.read_text(encoding="utf-8"))
+    for key in ("table_01", "table_02"):
+        data["tables"][key]["path"] = "data/cover.xlsx"
+    config.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
     resources = "example/resources.yaml"
     validated = json.loads(run(executable, ["validate", "example", "--resources", resources], cwd))
     assert validated["valid"] and validated["variables"] == 6
@@ -124,15 +133,6 @@ def build_standalone():
         shutil.copy2(scratch / "bin" / name, executable)
         shutil.copy2(ROOT / "LICENSE", bundle / "LICENSE")
         (bundle / "THIRD_PARTY_NOTICES.txt").write_text(notices(), encoding="utf-8")
-        # Never traverse the repository or local data folders while assembling a release.
-        shutil.copytree(ROOT / "template", bundle / "example", ignore=shutil.ignore_patterns(".DS_Store"))
-        resources = bundle / "example/resources.yaml"
-        import yaml
-
-        data = yaml.safe_load(resources.read_text(encoding="utf-8"))
-        for key in ("table_01", "table_02"):
-            data["tables"][key]["path"] = "data/cover.xlsx"
-        resources.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
         archive = output / f"hwpx-builder-{version}-{target}.zip"
         with ZipFile(archive, "w", ZIP_DEFLATED) as zipped:
             for path in sorted(bundle.rglob("*")):
@@ -141,9 +141,7 @@ def build_standalone():
         # Test the actual archive from a separate directory, including non-ASCII paths.
         unpacked = scratch / "unpacked example 한글"
         with ZipFile(archive) as zipped:
-            assert not any(
-                p.startswith(("docs/", "ref/", "examples/confidential_report/")) for p in zipped.namelist()
-            )
+            assert set(zipped.namelist()) == {name, "LICENSE", "THIRD_PARTY_NOTICES.txt"}
             zipped.extractall(unpacked)
         executable = unpacked / name
         if os.name != "nt":
